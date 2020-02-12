@@ -6,29 +6,32 @@ from cffi import FFI
 
 
 class Color:
-    PURPLE = '\033[95m'
-    CYAN = '\033[96m'
-    DARKCYAN = '\033[36m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    WHITE = '\033[97m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    DARKCYAN = "\033[36m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    WHITE = "\033[97m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+    END = "\033[0m"
 
 
 ffi = FFI()
-ctl = ffi.dlopen('liblttng-ctl.so')
+ctl = ffi.dlopen("liblttng-ctl.so")
 
 # endpoint.h
-ffi.cdef("""
+ffi.cdef(
+    """
 struct lttng_endpoint *lttng_session_daemon_notification_endpoint;
-""")
+"""
+)
 
 # notification/channel.h
-ffi.cdef("""
+ffi.cdef(
+    """
 
 enum lttng_notification_channel_status {
 	LTTNG_NOTIFICATION_CHANNEL_STATUS_NOTIFICATIONS_DROPPED = 1,
@@ -69,10 +72,12 @@ lttng_notification_channel_unsubscribe(
 void lttng_notification_channel_destroy(
 		struct lttng_notification_channel *channel);
 
-""")
+"""
+)
 
 # notification/notification.h
-ffi.cdef("""
+ffi.cdef(
+    """
 const struct lttng_condition *lttng_notification_get_condition(
 		struct lttng_notification *notification);
 
@@ -80,10 +85,12 @@ const struct lttng_evaluation *lttng_notification_get_evaluation(
 		struct lttng_notification *notification);
 
 void lttng_notification_destroy(struct lttng_notification *notification);
-""")
+"""
+)
 
 # condition/condition.h
-ffi.cdef("""
+ffi.cdef(
+    """
 enum lttng_condition_type {
 	LTTNG_CONDITION_TYPE_UNKNOWN = -1,
 	LTTNG_CONDITION_TYPE_SESSION_CONSUMED_SIZE = 100,
@@ -105,10 +112,12 @@ enum lttng_condition_type lttng_condition_get_type(
 		const struct lttng_condition *condition);
 
 void lttng_condition_destroy(struct lttng_condition *condition);
-""")
+"""
+)
 
 # evaluation.h
-ffi.cdef("""
+ffi.cdef(
+    """
 enum lttng_evaluation_status {
 	LTTNG_EVALUATION_STATUS_OK = 0,
 	LTTNG_EVALUATION_STATUS_ERROR = -1,
@@ -121,10 +130,12 @@ enum lttng_condition_type lttng_evaluation_get_type(
 		const struct lttng_evaluation *evaluation);
 
 void lttng_evaluation_destroy(struct lttng_evaluation *evaluation);
-""")
+"""
+)
 
 # condition/session-rotation.h
-ffi.cdef("""
+ffi.cdef(
+    """
 struct lttng_condition *
 lttng_condition_session_rotation_ongoing_create(void);
 
@@ -149,10 +160,12 @@ enum lttng_evaluation_status
 lttng_evaluation_session_rotation_completed_get_location(
 		const struct lttng_evaluation *evaluation,
 		const struct lttng_trace_archive_location **location);
-""")
+"""
+)
 
 # trigger/trigger.h
-ffi.cdef("""
+ffi.cdef(
+    """
 struct lttng_trigger *lttng_trigger_create(
 		struct lttng_condition *condition, struct lttng_action *action);
 
@@ -167,23 +180,29 @@ void lttng_trigger_destroy(struct lttng_trigger *trigger);
 int lttng_register_trigger(struct lttng_trigger *trigger);
 
 int lttng_unregister_trigger(struct lttng_trigger *trigger);
-""")
+"""
+)
 
 # action/action.h
-ffi.cdef("""
+ffi.cdef(
+    """
 enum lttng_action_type lttng_action_get_type(
 		struct lttng_action *action);
 
 void lttng_action_destroy(struct lttng_action *action);
-""")
+"""
+)
 
 # action/notify.h
-ffi.cdef("""
+ffi.cdef(
+    """
 struct lttng_action *lttng_action_notify_create(void);
-""")
+"""
+)
 
 # lttng-error.h
-ffi.cdef("""
+ffi.cdef(
+    """
 enum lttng_error_code {
 	LTTNG_OK                         = 10,  /* Ok */
 	LTTNG_ERR_UNK                    = 11,  /* Unknown Error */
@@ -322,10 +341,12 @@ enum lttng_error_code {
 };
 
 const char *lttng_strerror(int code);
-""")
+"""
+)
 
 # location.h
-ffi.cdef("""
+ffi.cdef(
+    """
 enum lttng_trace_archive_location_type {
 	LTTNG_TRACE_ARCHIVE_LOCATION_TYPE_UNKNOWN = 0,
 	LTTNG_TRACE_ARCHIVE_LOCATION_TYPE_LOCAL = 1,
@@ -375,7 +396,8 @@ enum lttng_trace_archive_location_status
 lttng_trace_archive_location_relay_get_relative_path(
 		const struct lttng_trace_archive_location *location,
 		const char **relative_path);
-""")
+"""
+)
 
 should_exit = False
 
@@ -387,9 +409,15 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 parser = argparse.ArgumentParser(
-    description='Monitor the rotations of a set of sessions.')
-parser.add_argument('sessions', metavar='s', type=str, nargs='+',
-                    help='Session(s) to monitor for rotations')
+    description="Monitor the rotations of a set of sessions."
+)
+parser.add_argument(
+    "sessions",
+    metavar="s",
+    type=str,
+    nargs="+",
+    help="Session(s) to monitor for rotations",
+)
 args = parser.parse_args()
 
 # Create notification channel
@@ -397,85 +425,104 @@ endpoint = ctl.lttng_session_daemon_notification_endpoint
 channel = ctl.lttng_notification_channel_create(endpoint)
 
 if channel == ffi.NULL:
-    print('Unable to create notification channel... Is a sessiond running?')
+    print("Unable to create notification channel... Is a sessiond running?")
     import sys
+
     sys.exit(-1)
 
 # Subscribe to rotation completed conditions and create their triggers
 for sessionName in args.sessions:
     rotationCompleted = ctl.lttng_condition_session_rotation_completed_create()
 
-    bSessionName = ffi.new("char[]", bytes(sessionName, 'utf-8'))
+    bSessionName = ffi.new("char[]", bytes(sessionName, "utf-8"))
     status = ctl.lttng_condition_session_rotation_set_session_name(
-        rotationCompleted,
-        bSessionName)
+        rotationCompleted, bSessionName
+    )
     if status != ctl.LTTNG_CONDITION_STATUS_OK:
-        raise RuntimeError('Failed to set rotation completed condition name')
+        raise RuntimeError("Failed to set rotation completed condition name")
 
     # Register session rotation completed trigger
     notify_action = ctl.lttng_action_notify_create()
-    trigger = ctl.lttng_trigger_create(
-        rotationCompleted, notify_action)
+    trigger = ctl.lttng_trigger_create(rotationCompleted, notify_action)
 
     status = ctl.lttng_register_trigger(trigger)
-    if status != 0 and status != -ctl.LTTNG_ERR_TRIGGER_EXISTS:
+    if status != 0 and status != ctl.LTTNG_ERR_TRIGGER_EXISTS:
         raise RuntimeError(
-            'Failed to register rotation completed trigger for session {}'.format(sessionName))
+            "Failed to register rotation completed trigger for session {}".format(
+                sessionName
+            )
+        )
 
     # Subscribe to session completed notifications
-    status = ctl.lttng_notification_channel_subscribe(
-        channel, rotationCompleted)
+    status = ctl.lttng_notification_channel_subscribe(channel, rotationCompleted)
     if status != ctl.LTTNG_NOTIFICATION_CHANNEL_STATUS_OK:
-        raise RuntimeError(
-            'Failed to subscribe to rotation completed condition')
+        raise RuntimeError("Failed to subscribe to rotation completed condition")
 
     ctl.lttng_trigger_destroy(trigger)
     ctl.lttng_condition_destroy(rotationCompleted)
     ctl.lttng_action_destroy(notify_action)
 
 
-print('Monitoring session' + ('' if len(args.sessions) == 1 else 's') + ' {} for rotations'.format(
-    ', '.join([(Color.WHITE + s + Color.END) for s in args.sessions])))
+print(
+    "Monitoring session"
+    + ("" if len(args.sessions) == 1 else "s")
+    + " {} for rotations".format(
+        ", ".join([(Color.WHITE + s + Color.END) for s in args.sessions])
+    )
+)
 
 
 while not should_exit:
-    notification_p = ffi.new('struct lttng_notification **')
+    notification_p = ffi.new("struct lttng_notification **")
 
     status = ctl.lttng_notification_channel_get_next_notification(
-        channel, notification_p)
+        channel, notification_p
+    )
     if status != ctl.LTTNG_NOTIFICATION_CHANNEL_STATUS_OK:
-        raise RuntimeError('Failed to get next notification from channel')
+        raise RuntimeError("Failed to get next notification from channel")
 
     notification = notification_p[0]
     condition = ctl.lttng_notification_get_condition(notification)
     evaluation = ctl.lttng_notification_get_evaluation(notification)
 
-    if ctl.lttng_condition_get_type(condition) != ctl.LTTNG_CONDITION_TYPE_SESSION_ROTATION_COMPLETED:
-        raise RuntimeError('Unexpected condition type')
+    if (
+        ctl.lttng_condition_get_type(condition)
+        != ctl.LTTNG_CONDITION_TYPE_SESSION_ROTATION_COMPLETED
+    ):
+        raise RuntimeError("Unexpected condition type")
 
-    session_name_c_str = ffi.new('char **')
+    session_name_c_str = ffi.new("char **")
     status = ctl.lttng_condition_session_rotation_get_session_name(
-        condition, session_name_c_str)
+        condition, session_name_c_str
+    )
     if status != ctl.LTTNG_CONDITION_STATUS_OK:
-        raise RuntimeError('Failed to get session name')
+        raise RuntimeError("Failed to get session name")
 
-    session_name = ffi.string(session_name_c_str[0]).decode('utf-8')
-    location_c_str = ffi.new('char **')
-    location_out_c = ffi.new('struct lttng_trace_archive_location**')
+    session_name = ffi.string(session_name_c_str[0]).decode("utf-8")
+    location_c_str = ffi.new("char **")
+    location_out_c = ffi.new("struct lttng_trace_archive_location**")
     status = ctl.lttng_evaluation_session_rotation_completed_get_location(
-        evaluation, location_out_c)
+        evaluation, location_out_c
+    )
     location_c = location_out_c[0]
-    if ctl.lttng_trace_archive_location_get_type(location_c) == ctl.LTTNG_TRACE_ARCHIVE_LOCATION_TYPE_LOCAL:
+    if (
+        ctl.lttng_trace_archive_location_get_type(location_c)
+        == ctl.LTTNG_TRACE_ARCHIVE_LOCATION_TYPE_LOCAL
+    ):
         status = ctl.lttng_trace_archive_location_local_get_absolute_path(
-            location_c, location_c_str)
+            location_c, location_c_str
+        )
         if status != ctl.LTTNG_TRACE_ARCHIVE_LOCATION_STATUS_OK:
-            raise RuntimeError('Failed to get local location absolute path')
-        archive_path = ffi.string(location_c_str[0]).decode('utf-8')
+            raise RuntimeError("Failed to get local location absolute path")
+        archive_path = ffi.string(location_c_str[0]).decode("utf-8")
     else:
-        raise RuntimeError('Unsupported trace achive location type')
+        raise RuntimeError("Unsupported trace achive location type")
 
-    print('Completed trace archive chunk for session {} available at: {}'.format(
-        session_name, archive_path))
+    print(
+        "Completed trace archive chunk for session {} available at: {}".format(
+            session_name, archive_path
+        )
+    )
 
     ctl.lttng_notification_destroy(notification)
 
